@@ -46,7 +46,22 @@ const orm_top_albums = async function(req, res) {
   //  - see .innerJoin(), .groupBy(), .orderBy(), .limit() and .offset() in https://orm.drizzle.team/docs/select
   //  - sum() and desc() have already been imported for you
   //  - check the type of plays in your response! (hint: look up .mapWith() in the Drizzle docs)
-  res.json([]); // replace this with your implementation
+
+  try {
+    const totalPlays = sum(songs.plays).mapWith(Number);
+
+    query = db.select({album_id: albums.album_id, title: albums.title, plays: totalPlays})
+    .from(albums)
+    .innerJoin(songs, eq(albums.album_id, songs.album_id))
+    .groupBy(albums.album_id)
+    .orderBy(desc(totalPlays));
+
+    rows = !page ? await query : await query.limit(pageSize).offset((Number(page)-1) * pageSize);
+    res.json(rows)
+  } catch (err) {
+    console.log(err)
+    res.json([]);
+  }
 }
 
 /**
