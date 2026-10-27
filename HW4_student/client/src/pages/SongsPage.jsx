@@ -28,13 +28,13 @@ export default function SongsPage() {
       });
   }, []);
 
-  const search = () => {
+  const search = (energyRange = energy, valenceRange = valence, danceabilityRange = danceability) => {
     fetch(`http://${config.server_host}:${config.server_port}/search_songs?title=${title}` +
       `&duration_low=${duration[0]}&duration_high=${duration[1]}` +
       `&plays_low=${plays[0]}&plays_high=${plays[1]}` +
-      `&danceability_low=${danceability[0]}&danceability_high=${danceability[1]}` +
-      `&energy_low=${energy[0]}&energy_high=${energy[1]}` +
-      `&valence_low=${valence[0]}&valence_high=${valence[1]}` +
+      `&danceability_low=${danceabilityRange[0]}&danceability_high=${danceabilityRange[1]}` +
+      `&energy_low=${energyRange[0]}&energy_high=${energyRange[1]}` +
+      `&valence_low=${valenceRange[0]}&valence_high=${valenceRange[1]}` +
       `&explicit=${explicit}`
     )
       .then(res => res.json())
@@ -43,7 +43,10 @@ export default function SongsPage() {
         // To accomplish this, we use a map with spread syntax (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax)
         const songsWithId = resJson.map((song) => ({ id: song.song_id, ...song }));
         setData(songsWithId);
-      });
+      }).catch(err => {
+        console.log(err)
+        alert('Search failed')
+      })
       // TODO (TASK 27): handle errors that could happen in the backend api call, and alert the user accordingly
       // Hint: What is the equivalent of try/catch when using promises?
   }
@@ -113,12 +116,63 @@ export default function SongsPage() {
         </Grid>
         {/* TODO (TASK 25): add sliders for danceability, energy, and valence (they should be all in the same row of the Grid) */}
         {/* Hint: consider what value xs should be to make them fit on the same row. Set max, min, and a reasonable step. Is valueLabelFormat is necessary? */}
+        <Grid item xs={4}>
+          <p>Danceability</p>
+          <Slider 
+            value={danceability}
+            min={0}
+            max={1}
+            step={0.001}
+            onChange={(e, newValue) => setDanceability(newValue)}
+            valueLabelDisplay='auto'/>
+        </Grid>
+        <Grid item xs={4}>
+          <p>Energy</p>
+          <Slider 
+            value={energy}
+            min={0}
+            max={1}
+            step={0.001}
+            onChange={(e, newValue) => setEnergy(newValue)}
+            valueLabelDisplay='auto' />
+        </Grid>
+        <Grid item xs={4}>
+          <p>Valence</p>
+          <Slider 
+            value={valence}
+            min={0}
+            max={1}
+            step={0.001}
+            onChange={(e, newValue) => setValence(newValue)}
+            valueLabelDisplay='auto'/>
+        </Grid>
       </Grid>
       <Button onClick={() => search() } style={{ left: '50%', transform: 'translateX(-50%)' }}>
         Search
       </Button>
       {/* TODO (TASK 26): add a "surprise me" button that randomly selects filters for energy, valence, and danceability and searches for it */}
       {/* Hint: Math.random() is your friend */}
+      <Button onClick={() => {
+        const e1 = Math.random()
+        const e2 = Math.random()
+        const randomEnergy = [Math.min(e1, e2), Math.max(e1, e2)];
+
+        const v1 = Math.random()
+        const v2 = Math.random()
+        const randomValence = [Math.min(v1, v2), Math.max(v1, v2)];
+
+        const d1 = Math.random()
+        const d2 = Math.random()
+        const randomDanceability = [Math.min(d1, d2), Math.max(d1, d2)];
+
+        setEnergy(randomEnergy);
+        setValence(randomValence);
+        setDanceability(randomDanceability);
+
+        search(randomEnergy, randomValence, randomDanceability);
+      }}>
+        Surprise Me
+      </Button>
       <h2>Results</h2>
       {/* Notice how similar the DataGrid component is to our LazyTable! What are the differences? */}
       <DataGrid
