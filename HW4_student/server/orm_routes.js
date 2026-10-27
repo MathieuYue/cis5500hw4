@@ -48,15 +48,13 @@ const orm_top_albums = async function(req, res) {
   //  - check the type of plays in your response! (hint: look up .mapWith() in the Drizzle docs)
 
   try {
-    const totalPlays = sum(songs.plays).mapWith(Number);
-
-    query = db.select({album_id: albums.album_id, title: albums.title, plays: totalPlays})
+    const query = db.select({album_id: albums.album_id, title: albums.title, plays: sum(songs.plays).mapWith(Number)})
     .from(albums)
     .innerJoin(songs, eq(albums.album_id, songs.album_id))
     .groupBy(albums.album_id)
-    .orderBy(desc(totalPlays));
+    .orderBy(desc(sum(songs.plays).mapWith(Number)));
 
-    rows = !page ? await query : await query.limit(pageSize).offset((Number(page)-1) * pageSize);
+    const rows = !page ? await query : await query.limit(pageSize).offset((Number(page)-1) * pageSize);
     res.json(rows)
   } catch (err) {
     console.log(err)
@@ -70,8 +68,18 @@ const orm_top_albums = async function(req, res) {
  * for Route 8 and answer the following questions in your submission:
  * 1. Which values does Drizzle send as parameters ($1, $2) in the generated SQL? Does your Route 8 query
  *    parameterize the same values, and why does parameterizing them matter?
+ * 
+ * Drizzle sends the parameters $1 = 10 (LIMIT) and $2 = 10 (OFFSET) in the generated SQL. 
+ * My query for Route 8 also uses parameterizes the same values.
+ * Parameterizing them helps avoid SQL injection attacks by separating the user entered value from the query.
+ * 
  * 2. Why is .mapWith(Number) (or something equivalent) needed for plays in Route 11?
+ * 
+ * .mapWith helps convert the output of sum to a javascript number that allows for runtime consistency.
+ * 
  * 3. Name one other difference between the generated SQL and your own query.
+ * 
+ * The drizzle generated SQL surrounds the table and attributes in quotes, where as my own query does not need quotes around them. 
  */
 
 module.exports = {
